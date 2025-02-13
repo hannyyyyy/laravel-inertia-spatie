@@ -16,7 +16,7 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -27,7 +27,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -35,20 +35,34 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    /**
+     * Hash password secara otomatis sebelum menyimpan ke database.
+     */
+    public function setPasswordAttribute($value)
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        if ($value) {
+            $this->attributes['password'] = bcrypt($value);
+        }
     }
 
-   public function getUserPermissions()
+    /**
+     * Mengembalikan semua izin (permissions) user dalam format array.
+     *
+     * @return array<string, bool>
+     */
+    public function getUserPermissions(): array
     {
-        return $this->getAllPermissions()->mapWithKeys(fn($permission) => [$permission['name'] => true]);
+        return $this->getAllPermissions()
+            ->pluck('name')
+            ->mapWithKeys(fn($permission) => [$permission => true])
+            ->toArray();
     }
 }
